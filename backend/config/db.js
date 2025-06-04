@@ -1,13 +1,16 @@
 // Database connectivity source
-const Sequelize = require('sequelize');
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  dialect: process.env.DB_DIALECT
-});
-const User = require('../models/user')(sequelize, Sequelize.DataTypes);
-const db = {};
+const { Sequelize } = require('sequelize');
 
-db.sequelize = sequelize;
-db.users = User;
+const shardCount = 3;
+const shards = [];
 
-module.exports = db;
+for (let i = 0; i < shardCount; i++) {
+  const sequelize = new Sequelize(`social_shard_${i}`, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
+    dialect: process.env.DB_DIALECT,
+    logging: false,
+  });
+  shards.push(sequelize);
+}
+
+module.exports = { shards, shardCount };
