@@ -1,12 +1,12 @@
 const {getShard} = require('../config/shardMiddleware');
 
-const getPosts = async (req, res) => {
+const getUser = async (req, res) => {
     try {
         const userId = req.params.userId;
         if(!userId) return res.status(400).json({message: "User id not found", status: false})
         const dbInstance = getShard(userId);
 
-        const details = await dbInstance.Post.findAll({where: {userId}});
+        const details = await dbInstance.User.findByPk(userId);
         return res.status(200).json({message: "User details", data: details, status: true});
     } catch (error) {
         console.log(error.message);
@@ -14,4 +14,4 @@ const getPosts = async (req, res) => {
     }
 }
 
-module.exports = {getPosts};
+module.exports = {getUser};

@@ -4,9 +4,11 @@ const server = express();
 require('dotenv').config();
 const {shards, shardCount} = require('./config/db');
 const {seedDatabase} = require('./config/seeder');
+const routers = require('./routes/index');
 
 server.use(cors());
 server.use(express.json());
+server.use(routers);
 
 const port = process.env.PORT || 8000;
 server.listen(port, () => {
