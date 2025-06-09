@@ -1,17 +1,33 @@
 const {getShard} = require('../config/shardMiddleware');
+const {successResponse, errorResponse} = require('../utils/response');
 
 const getUser = async (req, res) => {
     try {
         const userId = req.params.userId;
-        if(!userId) return res.status(400).json({message: "User id not found", status: false})
+        if(!userId) return res.status(400).json({message: "User id not found", status: false});
         const dbInstance = getShard(userId);
 
         const details = await dbInstance.User.findByPk(userId);
-        return res.status(200).json({message: "User details", data: details, status: true});
+        return successResponse(res,"User details",details);
     } catch (error) {
         console.log(error.message);
-        return res.status(500).json({message: error.message, status: false});
+        return errorResponse(res,error.message);
     }
 }
 
-module.exports = {getUser};
+const getTimeLine = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        if(!userId) return res.status(400).json({message: "User id not found", status: false});
+
+        const shard = getShard(userId);
+        const timelinePosts = await shard.Timeline.findAll({offset: 0, limit: 10});
+
+        return successResponse(res,"Timeline posts", timelinePosts);
+    } catch (error) {
+        console.log(error.message);
+        return errorResponse(res, error.message);
+    }
+}
+
+module.exports = {getUser, getTimeLine};

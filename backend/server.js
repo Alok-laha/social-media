@@ -3,7 +3,7 @@ const cors = require('cors');
 const server = express();
 require('dotenv').config();
 const {shards, shardCount} = require('./config/db');
-const {seedDatabase} = require('./config/seeder');
+const {seedDatabase, insertTimelinePosts} = require('./config/seeder');
 const routers = require('./routes/index');
 
 server.use(cors());
@@ -27,6 +27,6 @@ for(let count = 0;count < shardCount; count++) {
     validateDBInstanceAndSeedDB(count);
 }
 // seedDatabase();
-
+// insertTimelinePosts(2, 0, 10);
 
 server.get('/', (req, res) => res.status(200).send("Welcome to social media backend"));

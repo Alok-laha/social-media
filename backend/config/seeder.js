@@ -1,13 +1,13 @@
 const { faker } = require('@faker-js/faker');
-const {getShard} = require('./shardMiddleware');
+const { getShard } = require('./shardMiddleware');
 const shardModels = require('./shardModels');
 
 async function generateUsers(count) {
     console.log(`Generating ${count} users...`);
     for (let i = 0; i < count; i++) {
-        let instance = getShard(i+1);
+        let instance = getShard(i + 1);
         const user = new instance.User({
-            id: i+1,
+            id: i + 1,
             username: faker.internet.userName(),
             email: faker.internet.email(),
             password: '1234', // Use a consistent hashed password for dummy users
@@ -64,7 +64,7 @@ async function generateFollows(userIds, followRatio = 0.1) {
             await follow.save();
             totalFollows++;
         }
-        if (totalFollows % 10000 === 0) console.log(`  ${totalFollows} follows generated.`);
+        if (totalFollows % 10000 === 0) console.log(`${totalFollows} follows generated.`);
     }
     console.log(`Follows generation complete: ${totalFollows} follows.`);
 }
@@ -115,35 +115,35 @@ async function seedDatabase() {
     const POSTS_PER_USER_MAX = 50;
 
     async function getAllUsers() {
-      const results = await Promise.all(
-        shardModels.map(async ({ User }) => {
-          return await User.findAll();
-        })
-      );
+        const results = await Promise.all(
+            shardModels.map(async ({ User }) => {
+                return await User.findAll();
+            })
+        );
 
-      // Flatten the array of arrays
-      const allUsers = results.flat();
-      return allUsers;
+        // Flatten the array of arrays
+        const allUsers = results.flat();
+        return allUsers;
     }
     console.time("Users fetch");
     const userIds = (await getAllUsers()).map(u => u.id);
     console.timeEnd("Users fetch");
 
-    if(userIds.length === 0){
+    if (userIds.length === 0) {
         await generateUsers(NUM_USERS);
     }
 
     await generatePosts(userIds, POSTS_PER_USER_MIN, POSTS_PER_USER_MAX);
     async function getAllPosts() {
-      const results = await Promise.all(
-        shardModels.map(async ({ Post }) => {
-          return await Post.findAll();
-        })
-      );
+        const results = await Promise.all(
+            shardModels.map(async ({ Post }) => {
+                return await Post.findAll();
+            })
+        );
 
-      // Flatten the array of arrays
-      const allPosts = results.flat();
-      return allPosts;
+        // Flatten the array of arrays
+        const allPosts = results.flat();
+        return allPosts;
     }
 
     const postIds = (await getAllPosts()).map(p => p.id);
@@ -154,4 +154,37 @@ async function seedDatabase() {
     console.log('Database seeding complete!');
 }
 
-module.exports = {seedDatabase}
+async function insertTimelinePosts(shardNo, page, limit) {
+    // This function will help us to generate the time line posts for specified users present in specified shard
+    if ([0, 1, 2].includes(shardNo)) {
+        const users = await shardModels[shardNo].User.findAll({ offset: page, limit });
+        users.forEach(async user => {
+            const ifollow = await shardModels[shardNo].Follow.findAll({
+                where: {
+                    followerId: user.id
+                }, offset: 0, limit: 10
+            });
+            ifollow.forEach(async followee => {
+                // get the shard of this guy. Gets you the whole replica of the db instance
+                const toShard = getShard(followee.followedId);
+                const followeePosts = await toShard.Post.findAll({ where: { userId: followee.followedId }, offset: 0, limit: 10 });
+                console.log(`user ${followee.followedId}, posts ${followeePosts.length}`);
+                followeePosts.forEach(async fpost => {
+                    await shardModels[shardNo].Timeline.create({
+                        followerId: user.id,
+                        content: fpost.content,
+                        imageUrl: fpost.imageUrl,
+                        likesCount: 0,
+                        commentsCount: 0,
+                        createdAt: faker.date.recent({ days: 365 })
+                    })
+                });
+            });
+        });
+    } else {
+        return false;
+    }
+
+}
+
+module.exports = { seedDatabase, insertTimelinePosts };
