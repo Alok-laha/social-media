@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     followerId: DataTypes.INTEGER,
+    postId: DataTypes.INTEGER,
     content: DataTypes.STRING(2000),
     imageUrl: DataTypes.STRING(250),
     likesCount: DataTypes.INTEGER,

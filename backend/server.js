@@ -35,7 +35,10 @@ async function initiateServer() {
         validateDBInstanceAndSeedDB(count);
     }
     // seedDatabase();
+    // insertTimelinePosts(0, 0, 10);
+    // insertTimelinePosts(1, 0, 10);
     // insertTimelinePosts(2, 0, 10);
+
 }
 
 async function gracefulShutdown() {

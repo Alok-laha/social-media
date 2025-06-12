@@ -172,6 +172,7 @@ async function insertTimelinePosts(shardNo, page, limit) {
                 followeePosts.forEach(async fpost => {
                     await shardModels[shardNo].Timeline.create({
                         followerId: user.id,
+                        postId: fpost.id,
                         content: fpost.content,
                         imageUrl: fpost.imageUrl,
                         likesCount: 0,
