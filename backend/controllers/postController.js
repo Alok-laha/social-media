@@ -30,12 +30,12 @@ const createPost = async (req, res) =>{
         // now we need to create the records in the shards
         const postPromises = new Array();
         const isoDate = new Date(Date.now()).toISOString();
-        postPromises.push(getShard(userId).Post.create({
+        const newPost = await getShard(userId).Post.create({
             userId,
             content,
             imageUrl,
             createdAt: isoDate
-        }));
+        });
 
         result.forEach(shardRes=>{
             shardRes.forEach(follower=> {
@@ -45,14 +45,15 @@ const createPost = async (req, res) =>{
                     imageUrl: imageUrl,
                     likesCount: 0,
                     commentsCount: 0,
-                    createdAt: isoDate
+                    createdAt: isoDate,
+                    postId: newPost.id
                 }));
             })
         });
 
-        const resolvedPromises = await Promise.all(postPromises);
+        await Promise.all(postPromises);
         
-        return successResponse(res, "Post created successfully", resolvedPromises[0]);
+        return successResponse(res, "Post created successfully", newPost);
     } catch (error) {
         console.log(error.message);
         return errorResponse(res, error.message);

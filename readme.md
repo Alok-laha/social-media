@@ -1,0 +1,4 @@
+- Here the sharding is based on userId. So all the data of one user remain in one shard. Like posts, likes, comments, follows etc. 
+- Time line posts of each user is also maintained in the same shard in which user stays. This makes time line fetching quite fast. Along with likes, comments count.
+- The drawback of this is we need to fan out read / write when we try to get all the comments made for a post, when we need to update the likes and comments count for any post. But as we know comments reading is less frequent then timeline posts so we took this approach.
+- We are saving the count of comments and likes in redis to improve the performance when we want to update the count of likes and comments in users time line history.
