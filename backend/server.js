@@ -5,7 +5,8 @@ require('dotenv').config();
 const { shards, shardCount } = require('./config/db');
 const { seedDatabase, insertTimelinePosts } = require('./config/seeder');
 const routers = require('./routes/index');
-const {getRedisClient} = require('./config/redis');
+const { getRedisClient } = require('./config/redis');
+const { sendRequest } = require('./config/rateAttackSimulator'); // For checking the validity of rate limiter
 
 let app;
 let redisClient;
@@ -15,12 +16,12 @@ async function initiateServer() {
     server.use(routers);
 
     const port = process.env.PORT || 8000;
-    app = server.listen(port, () => {
+    app = server.listen(port, '0.0.0.0', () => {
         console.log(`Social media backend is running on port ${port}`);
     });
 
     redisClient = await getRedisClient();
-    await redisClient.set("name", "Secial media redis");
+    await redisClient.set("name", "Secial media redis", { condition: 'NX' });
     console.log(await redisClient.get("name"))
 
     async function validateDBInstanceAndSeedDB(shardIndex) {
@@ -34,11 +35,21 @@ async function initiateServer() {
     for (let count = 0; count < shardCount; count++) {
         validateDBInstanceAndSeedDB(count);
     }
+
     // seedDatabase();
     // insertTimelinePosts(0, 0, 10);
     // insertTimelinePosts(1, 0, 10);
     // insertTimelinePosts(2, 0, 10);
 
+    // (async () => {
+    //     // Number of total requests you want to send
+    //     const TOTAL_REQUESTS = 50;
+    //     for (let i = 1; i <= TOTAL_REQUESTS; i++) {
+    //         setTimeout(() => {
+    //             sendRequest(i);
+    //         }, Math.random() * 2000); // random delay for realism
+    //     }
+    // })();
 }
 
 async function gracefulShutdown() {
